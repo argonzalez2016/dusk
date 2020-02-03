@@ -2,9 +2,9 @@
 
 namespace Laravel\Dusk\Console;
 
-use ZipArchive;
 use Illuminate\Console\Command;
 use Laravel\Dusk\OperatingSystem;
+use ZipArchive;
 
 /**
  * @copyright Originally created by Jonas Staudenmeir: https://github.com/staudenmeir/dusk-updater
@@ -16,7 +16,10 @@ class ChromeDriverCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'dusk:chrome-driver {version?} {--all : Install a ChromeDriver binary for every OS}';
+    protected $signature = 'dusk:chrome-driver {version?}
+                    {--all : Install a ChromeDriver binary for every OS}
+                    {--proxy= : The proxy to download the binary through (example: "tcp://127.0.0.1:9000")}
+                    {--ssl-no-verify : Bypass SSL certificate verification when installing through a proxy}';
 
     /**
      * The console command description.
@@ -26,14 +29,14 @@ class ChromeDriverCommand extends Command
     protected $description = 'Install the ChromeDriver binary';
 
     /**
-     * URL to the home page.
+     * URL to the latest stable release version.
      *
      * @var string
      */
-    protected $homeUrl = 'http://chromedriver.chromium.org/home';
+    protected $latestVersionUrl = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE';
 
     /**
-     * URL to the latest release version.
+     * URL to the latest release version for a major Chrome version.
      *
      * @var string
      */
@@ -150,7 +153,7 @@ class ChromeDriverCommand extends Command
             return $this->legacyVersions[$version];
         }
 
-        return trim(file_get_contents(
+        return trim($this->getUrl(
             sprintf($this->versionUrl, $version)
         ));
     }
@@ -162,11 +165,7 @@ class ChromeDriverCommand extends Command
      */
     protected function latestVersion()
     {
-        $home = file_get_contents($this->homeUrl);
-
-        preg_match('/Latest stable release:.*?\?path=([\d.]+)/', $home, $matches);
-
-        return $matches[1];
+        return trim(file_get_contents($this->latestVersionUrl));
     }
 
     /**
@@ -182,7 +181,7 @@ class ChromeDriverCommand extends Command
 
         file_put_contents(
             $archive = $this->directory.'chromedriver.zip',
-            fopen($url, 'r')
+            $this->getUrl($url)
         );
 
         return $archive;
@@ -225,5 +224,28 @@ class ChromeDriverCommand extends Command
         rename($this->directory.$binary, $this->directory.$newName);
 
         chmod($this->directory.$newName, 0755);
+    }
+
+    /**
+     * Get the contents of a URL using the 'proxy' and 'ssl-no-verify' command options.
+     *
+     * @param  string  $url
+     * @return string|bool
+     */
+    protected function getUrl(string $url)
+    {
+        $contextOptions = [];
+
+        if ($this->option('proxy')) {
+            $contextOptions['http'] = ['proxy' => $this->option('proxy'), 'request_fulluri' => true];
+        }
+
+        if ($this->option('ssl-no-verify')) {
+            $contextOptions['ssl'] = ['verify_peer' => false];
+        }
+
+        $streamContext = stream_context_create($contextOptions);
+
+        return file_get_contents($url, false, $streamContext);
     }
 }

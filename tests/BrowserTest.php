@@ -2,15 +2,28 @@
 
 namespace Laravel\Dusk\Tests;
 
-use stdClass;
-use Mockery as m;
-use Laravel\Dusk\Page;
-use Laravel\Dusk\Browser;
-use PHPUnit\Framework\TestCase;
 use Facebook\WebDriver\Remote\WebDriverBrowserType;
+use Laravel\Dusk\Browser;
+use Laravel\Dusk\Page;
+use Mockery as m;
+use PHPUnit\Framework\TestCase;
+use stdClass;
 
 class BrowserTest extends TestCase
 {
+    /** @var \Mockery\MockInterface */
+    private $driver;
+
+    /** @var Browser */
+    private $browser;
+
+    protected function setUp(): void
+    {
+        $this->driver = m::mock(stdClass::class);
+
+        $this->browser = new Browser($this->driver);
+    }
+
     protected function tearDown(): void
     {
         m::close();
@@ -154,6 +167,63 @@ class BrowserTest extends TestCase
         $browser = new Browser($driver);
 
         $browser->storeConsoleLog('file');
+    }
+
+    public function test_screenshot()
+    {
+        $this->driver->shouldReceive('takeScreenshot')->andReturnUsing(function ($filePath) {
+            touch($filePath);
+        });
+
+        Browser::$storeScreenshotsAt = sys_get_temp_dir();
+
+        $this->browser->screenshot(
+            $name = 'screenshot-01'
+        );
+
+        $this->assertFileExists(Browser::$storeScreenshotsAt.'/'.$name.'.png');
+    }
+
+    public function test_screenshot_in_subdirectory()
+    {
+        $this->driver->shouldReceive('takeScreenshot')->andReturnUsing(function ($filePath) {
+            touch($filePath);
+        });
+
+        Browser::$storeScreenshotsAt = sys_get_temp_dir();
+
+        $this->browser->screenshot(
+            $name = uniqid('random').'/sub/dir/screenshot-01'
+        );
+
+        $this->assertFileExists(Browser::$storeScreenshotsAt.'/'.$name.'.png');
+    }
+
+    public function test_can_disable_fit_on_failure()
+    {
+        $this->browser->fitOnFailure = true;
+        $this->browser->disableFitOnFailure();
+
+        $this->assertFalse($this->browser->fitOnFailure);
+    }
+
+    public function test_can_enable_fit_on_failure()
+    {
+        $this->browser->fitOnFailure = false;
+        $this->browser->enableFitOnFailure();
+
+        $this->assertTrue($this->browser->fitOnFailure);
+    }
+
+    public function test_source_code_can_be_stored()
+    {
+        $this->driver->shouldReceive('getPageSource')->andReturn('source content');
+        Browser::$storeSourceAt = sys_get_temp_dir();
+        $this->browser->storeSource(
+            $name = 'screenshot-01'
+        );
+        $this->assertFileExists(Browser::$storeSourceAt.'/'.$name.'.txt');
+        $this->assertStringEqualsFile(Browser::$storeSourceAt.'/'.$name.'.txt', 'source content');
     }
 }
 

@@ -2,8 +2,8 @@
 
 namespace Laravel\Dusk\Chrome;
 
-use RuntimeException;
 use Laravel\Dusk\OperatingSystem;
+use RuntimeException;
 use Symfony\Component\Process\Process;
 
 class ChromeProcess
@@ -20,6 +20,8 @@ class ChromeProcess
      *
      * @param  string  $driver
      * @return void
+     *
+     * @throws \RuntimeException
      */
     public function __construct($driver = null)
     {

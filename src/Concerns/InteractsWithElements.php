@@ -2,11 +2,11 @@
 
 namespace Laravel\Dusk\Concerns;
 
-use Illuminate\Support\Str;
+use Facebook\WebDriver\Interactions\WebDriverActions;
+use Facebook\WebDriver\Remote\LocalFileDetector;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverKeys;
-use Facebook\WebDriver\Remote\LocalFileDetector;
-use Facebook\WebDriver\Interactions\WebDriverActions;
+use Illuminate\Support\Str;
 
 trait InteractsWithElements
 {
@@ -62,6 +62,8 @@ trait InteractsWithElements
         if (is_null($value)) {
             return $this->resolver->findOrFail($selector)->getAttribute('value');
         }
+
+        $value = addslashes($value);
 
         $selector = $this->resolver->format($selector);
 
@@ -187,6 +189,10 @@ trait InteractsWithElements
         if (is_null($value)) {
             $options[array_rand($options)]->click();
         } else {
+            if (is_bool($value)) {
+                $value = $value ? '1' : '0';
+            }
+
             foreach ($options as $option) {
                 if ((string) $option->getAttribute('value') === (string) $value) {
                     $option->click();

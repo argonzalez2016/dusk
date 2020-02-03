@@ -2,10 +2,10 @@
 
 namespace Laravel\Dusk\Concerns;
 
+use Facebook\WebDriver\Exception\NoSuchElementException;
+use Facebook\WebDriver\Remote\RemoteWebElement;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Assert as PHPUnit;
-use Facebook\WebDriver\Remote\RemoteWebElement;
-use Facebook\WebDriver\Exception\NoSuchElementException;
 
 trait MakesAssertions
 {
@@ -455,8 +455,8 @@ JS;
     /**
      * Assert that the given array of values are available to be selected.
      *
-     * @param string  $field
-     * @param array  $values
+     * @param  string  $field
+     * @param  array  $values
      * @return $this
      */
     public function assertSelectHasOptions($field, array $values)
@@ -478,8 +478,8 @@ JS;
     /**
      * Assert that the given array of values are not available to be selected.
      *
-     * @param string  $field
-     * @param array  $values
+     * @param  string  $field
+     * @param  array  $values
      * @return $this
      */
     public function assertSelectMissingOptions($field, array $values)
@@ -495,8 +495,8 @@ JS;
     /**
      * Assert that the given value is available to be selected on the given field.
      *
-     * @param string  $field
-     * @param string  $value
+     * @param  string  $field
+     * @param  string  $value
      * @return $this
      */
     public function assertSelectHasOption($field, $value)
@@ -507,8 +507,8 @@ JS;
     /**
      * Assert that the given value is not available to be selected on the given field.
      *
-     * @param string  $field
-     * @param string  $value
+     * @param  string  $field
+     * @param  string  $value
      * @return $this
      */
     public function assertSelectMissingOption($field, $value)
@@ -654,6 +654,42 @@ JS;
         PHPUnit::assertFalse(
             $element->isEnabled(),
             "Expected element [{$field}] to be disabled, but it wasn't."
+        );
+
+        return $this;
+    }
+
+    /**
+     * Assert that the given button is enabled.
+     *
+     * @param  string  $button
+     * @return $this
+     */
+    public function assertButtonEnabled($button)
+    {
+        $element = $this->resolver->resolveForButtonPress($button);
+
+        PHPUnit::assertTrue(
+            $element->isEnabled(),
+            "Expected button [{$button}] to be enabled, but it wasn't."
+        );
+
+        return $this;
+    }
+
+    /**
+     * Assert that the given button is disabled.
+     *
+     * @param  string  $button
+     * @return $this
+     */
+    public function assertButtonDisabled($button)
+    {
+        $element = $this->resolver->resolveForButtonPress($button);
+
+        PHPUnit::assertFalse(
+            $element->isEnabled(),
+            "Expected button [{$button}] to be disabled, but it wasn't."
         );
 
         return $this;
